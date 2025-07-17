@@ -2,13 +2,18 @@ def run(plan):
     db_ips = []
     for i in range(3):
         svc = plan.add_service(
-            name="db-" + str(i),
+            name="node-" + str(i),
             config=ServiceConfig(
-                image="cockroachdb/cockroach:v24.1.2",
-                ports={"sql": PortSpec(26257), "http": PortSpec(8080)},
+                image="ubuntu:22.04",
+                ports={"ssh": PortSpec(22)},  # expose SSH port if needed
                 cmd=[
-                    "start", "--insecure",
-                    "--join=db-0:26257"
+                    "bash", "-c",
+                    "apt-get update && apt-get install -y openssh-server sudo && " +
+                    "useradd -m -s /bin/bash ubuntu && echo 'ubuntu:ubuntu' | chpasswd && " +
+                    "mkdir /var/run/sshd && " +
+                    "echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && " +
+                    "echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && " +
+                    "/usr/sbin/sshd -D"
                 ],
             )
         )
@@ -26,12 +31,12 @@ def run(plan):
             files={"/test/": jepsen_test_artifact},
             # entrypoint = ["/test"],
             cmd=[
-                # "sleep", "3600"
-                "lein", "run",
-                "--",
-                "--nodes", ",".join(db_ips),
-                "--path", "/",
-                "--filename", "testfile.txt"
+                "sleep", "3600"
+                # "lein", "run",
+                # "--",
+                # "--nodes", ",".join(db_ips),
+                # "--path", "/",
+                # "--filename", "testfile.txt"
             ],
         )
     )

@@ -29,6 +29,7 @@
   {:name      "Create file"
    :os        :debian
    :nodes     nodes
+   :username  "ubuntu"
    :nemesis   nil
    :client    (reify client/Client
                 (setup! [this test]
