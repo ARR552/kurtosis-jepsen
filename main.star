@@ -13,7 +13,7 @@ def run(plan):
                 ports={"ssh": PortSpec(22)},  # expose SSH port if needed
                 cmd=[
                     "bash", "-c",
-                    "apt-get update && apt-get install -y openssh-server && " +
+                    "apt-get update && apt-get install -y openssh-server sudo && " +
                     "useradd -m -s /bin/bash ubuntu && echo 'ubuntu:ubuntu' | chpasswd && " +
                     "mkdir /var/run/sshd && " +
                     "echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && " +
@@ -54,6 +54,18 @@ def run(plan):
             ],
         )
     )
+
+    # Add each node's key to known_hosts in the Jepsen container
+    for ip in db_ips:
+        plan.exec(
+            service_name="jepsen",
+            recipe=ExecRecipe(
+                command=[
+                    "bash", "-c",
+                    "ssh-keyscan -t ed25519 " + ip + " >> /root/.ssh/known_hosts"
+                ]
+            )
+        )
 
     # (optional) wait for Jepsen to finish & export a results tarball
     # plan.exec(service_name="jepsen", recipe=ExecRecipe(command=["sleep", "3600"]))
