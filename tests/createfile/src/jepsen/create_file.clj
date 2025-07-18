@@ -27,13 +27,21 @@
     (info "Created file" file-path)))
 
 (defn client-create-test
-  [node path filename]
-  (println "3 Node value:" node)
-  (reify client/Client
-    (open! [_ test node]
-      (c/on node #(create-file-op! path filename)))
-    (invoke! [_ test op] op)
-    (teardown! [this test] this)))
+  [path filename]
+    (reify client/Client
+      (open! [this test node]
+        (println "3 Node value:" node)
+        (c/on node #(create-file-op! path filename))
+        this)
+      (setup!   [this test]
+        ;; nothing to do here
+        this)
+      (invoke! [_ _ op]
+        (assoc op :type :ok))
+      (teardown! [this _]
+        this)
+      (close! [this _]
+        this)))
 
 (defn create-file-test
   [nodes path filename]
@@ -45,10 +53,11 @@
           :nodes     nodes
           ;; :username  "ubuntu"
           ;; :ssh       {:private-key-path "/root/.ssh/id_rsa" :strict-host-key-checking false}
-          :nemesis   nil
-          :client    (fn [node] (client-create-test node path filename))
-          :generator (fn [_ _] []) ; No actual operations, only setup
-          :model     nil))
+          ;; :nemesis   nil
+          :client    (client-create-test path filename)
+          ;; :generator (fn [_ _] []) ; No actual operations, only setup
+          ;; :model     nil
+          ))
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)]
