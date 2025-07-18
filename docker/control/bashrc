@@ -11,7 +11,7 @@ You are currently in the base dir of the git repo for Jepsen.
 If you modify the core jepsen library make sure you "lein install" it so other tests can access.
 
 To run a test:
-   cd /test && lein run -- --nodes node1,node2 --path /tmp/jepsen --filename testfile.txt
+   cd /test && lein run -- --nodes 172.16.0.4,172.16.0.5 --path /tmp/jepsen --filename testfile.txt
 EOF
 
 cd /test

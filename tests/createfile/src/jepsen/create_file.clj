@@ -19,19 +19,17 @@
    ])
 
 (defn create-file-op!
-  [path filename]
+  [node path filename]
+  (c/exec :mkdir "-p" path)
   (let [file-path (str path "/" filename)]
-    (info "Creating file on node at" file-path)
-    (c/exec :mkdir "-p" path)
     (c/exec :touch file-path)
-    (info "Created file" file-path)))
+    (info node "Created file" file-path)))
 
 (defn client-create-test
   [path filename]
     (reify client/Client
       (open! [this test node]
-        (println "3 Node value:" node)
-        (c/on node #(create-file-op! path filename))
+          (c/on node (create-file-op! node path filename))
         this)
       (setup!   [this test]
         ;; nothing to do here
@@ -45,29 +43,20 @@
 
 (defn create-file-test
   [nodes path filename]
-  (println "2 Nodes value:" nodes)
-  (println "2 Node types:" (mapv type nodes))
   (assoc tests/noop-test
           :name      "Create file"
           :os        debian/os
           :nodes     nodes
-          ;; :username  "ubuntu"
-          ;; :ssh       {:private-key-path "/root/.ssh/id_rsa" :strict-host-key-checking false}
-          ;; :nemesis   nil
           :client    (client-create-test path filename)
-          ;; :generator (fn [_ _] []) ; No actual operations, only setup
-          ;; :model     nil
           ))
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)]
     (println "DEBUG options:" options)
-    (println "Nodes value:" (:nodes options))
-    (println "Node types:" (mapv type (:nodes options)))
     (cond
       (:help options)
       (do
-        (println "Usage: lein run -- --nodes node1,node2 --path /tmp/jepsen --filename testfile.txt")
+        (println "Usage: lein run -- --nodes <ip_node_1>,<ip_node_2> --path /tmp/jepsen --filename testfile.txt")
         (println summary)
         (System/exit 0))
 
@@ -76,7 +65,7 @@
           (not (:filename options)))
       (do
         (println "Missing required arguments!\n")
-        (println "Usage: lein run -- --nodes node1,node2 --path /tmp/jepsen --filename testfile.txt")
+        (println "Usage: lein run -- --nodes <ip_node_1>,<ip_node_2> --path /tmp/jepsen --filename testfile.txt")
         (println summary)
         (System/exit 1))
 

@@ -49,7 +49,7 @@ def run(plan):
                 "lein", "run",
                 "--",
                 "--nodes", ",".join(db_ips),
-                "--path", "/",
+                "--path", "/tmp",
                 "--filename", "testfile.txt"
             ],
         )
