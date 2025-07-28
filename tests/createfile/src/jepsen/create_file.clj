@@ -25,17 +25,26 @@
     (c/exec :touch file-path)
     (info node "Created file" file-path)))
 
+(defn file-exists? [folder filename]
+  (let [path (str folder "/" filename)]
+    (try
+      (c/exec :test "-f" path)
+      true
+      (catch Exception _
+        false))))
+
 (defn client-create-test
   [path filename]
     (reify client/Client
       (open! [this test node]
-          (c/on node (create-file-op! node path filename))
+        (c/on node (create-file-op! node path filename))
+        (let [exists? (c/on node (file-exists? path filename))
+            fp      (str path "/" filename)]
+          (info node "File exists?" exists?)
+          (assert exists? (str "File not created: " path "/" filename)))
         this)
-      (setup!   [this test]
-        ;; nothing to do here
+      (setup! [this _]
         this)
-      (invoke! [_ _ op]
-        (assoc op :type :ok))
       (teardown! [this _]
         this)
       (close! [this _]
@@ -47,8 +56,8 @@
           :name      "Create file"
           :os        debian/os
           :nodes     nodes
-          :client    (client-create-test path filename)
-          ))
+          :concurrency (count nodes)
+          :client    (client-create-test path filename)))
 
 (defn -main [& args]
   (let [{:keys [options errors summary]} (parse-opts args cli-options)]
